@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a1122">
+<title>Für dich</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night-0:#0a1122;
+    --night-1:#101a33;
+    --night-2:#1c2c55;
+    --cloth:#2a3b70;
+    --cloth-deep:#1f2d5a;
+    --foil:#d9b968;
+    --paper:#f8f1dd;
+    --cream:#fbf2d8;
+    --sun:#ffd23f;
+    --u:min(43vw, 31vh, 340px);
+    --h:calc(var(--u) * 1.35);
+    color-scheme:dark;
+  }
+  @supports (height:1dvh){ :root{ --u:min(43vw, 31dvh, 340px); } }
+
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; margin:0; }
+  body{
+    display:flex; flex-direction:column;
+    height:100vh; height:100dvh;
+    overflow:hidden;
+    color:var(--cream);
+    font-family:'Spectral', Georgia, 'Times New Roman', serif;
+    background:
+      radial-gradient(120% 80% at 50% 72%, var(--night-2) 0%, var(--night-1) 45%, var(--night-0) 100%);
+    background-color:var(--night-0);
+  }
+
+  /* ---------- Untertitel (oben) ---------- */
+  .subs{
+    flex:none;
+    text-align:center;
+    font-size:clamp(1.02rem, .88rem + 1.05vw, 1.6rem);
+    padding:calc(env(safe-area-inset-top, 0px) + clamp(18px, 5vh, 48px)) 6vw 0;
+    min-height:calc(env(safe-area-inset-top, 0px) + clamp(18px, 5vh, 48px) + 4.9em);
+    position:relative; z-index:5;
+  }
+  .line{
+    margin:0 auto; max-width:34em;
+    font-style:italic; font-weight:300; line-height:1.55;
+    text-wrap:balance;
+    text-shadow:0 1px 14px rgba(0,0,0,.65);
+    opacity:0; transition:opacity .7s ease;
+  }
+  .line.on{ opacity:1; }
+
+  /* ---------- Bühne ---------- */
+  .stage{ flex:1; position:relative; min-height:0; }
+  .scene{ position:absolute; inset:0; perspective:1500px; perspective-origin:50% 35%; }
+
+  .glow{
+    position:absolute; left:50%; top:30%;
+    width:calc(var(--u) * 2.4); aspect-ratio:1;
+    transform:translate(-50%,-50%) scale(.6);
+    background:radial-gradient(closest-side, rgba(255,205,60,.34), rgba(255,205,60,.10) 55%, rgba(255,205,60,0));
+    opacity:0; pointer-events:none;
+  }
+
+  .tilt{
+    position:absolute; inset:0;
+    transform-style:preserve-3d;
+    transform-origin:50% 60%;
+    transform:rotateX(22deg) rotateY(-26deg);
+  }
+  .book{
+    position:absolute; left:50%; top:60%;
+    width:var(--u); height:var(--h);
+    margin-top:calc(var(--h) * -.5);
+    transform-style:preserve-3d;
+    transform:translateX(calc(var(--u) * -.5));
+  }
+  .book > *{ position:absolute; }
+
+  .shadow{
+    left:calc(var(--u) * -1.25); top:-6%;
+    width:calc(var(--u) * 2.5); height:112%;
+    background:radial-gradient(closest-side, rgba(0,0,0,.6), rgba(0,0,0,0));
+    transform:translateZ(-34px) translateX(calc(var(--u) * .62)) scaleX(.5);
+  }
+
+  /* Dicke des Buches */
+  .board{
+    left:0; top:-4px; width:calc(100% + 6px); height:calc(100% + 8px);
+    background:var(--cloth-deep); border-radius:3px 7px 7px 3px;
+  }
+  .blk{ left:0; top:0; width:100%; height:100%; border-right:1px solid rgba(60,40,10,.12); }
+  .l{ visibility:hidden; }
+  .board.l{ left:auto; right:100%; width:calc(100% + 6px); border-radius:7px 3px 3px 7px; }
+  .blk.l{ left:auto; right:100%; border-right:0; border-left:1px solid rgba(60,40,10,.12); }
+
+  /* Seiten */
+  .base{ inset:0; transform:translateZ(0); }
+  .paper{
+    background:
+      linear-gradient(90deg, rgba(74,52,14,.30) 0, rgba(74,52,14,.10) 5%, rgba(74,52,14,0) 16%),
+      linear-gradient(180deg, #faf4e2, #f3e9cd);
+    border-radius:0 3px 3px 0;
+  }
+  .paper::after{
+    content:""; position:absolute; inset:9% 9% 9% 13%;
+    border:1px solid rgba(122,92,32,.22);
+  }
+
+  .flip{ inset:0; transform-origin:0 50%; transform-style:preserve-3d; }
+  .face{
+    position:absolute; inset:0;
+    backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  }
+  .face.back{ transform:rotateY(180deg); }
+
+  .leaf{ transform:translateZ(3px); }
+  .cover{
+    inset:auto; left:0; top:-4px;
+    width:calc(100% + 6px); height:calc(100% + 8px);
+    transform:translateZ(6px);
+  }
+  .cover .face{ position:absolute; inset:0; }
+
+  .cloth{
+    background:
+      repeating-linear-gradient(45deg, rgba(255,255,255,.03) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(-45deg, rgba(0,0,0,.05) 0 1px, transparent 1px 3px),
+      linear-gradient(120deg, #36498d, #27386d 55%, #1f2d5a);
+    border-radius:3px 7px 7px 3px;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+  .cloth::before{
+    content:""; position:absolute; left:0; top:0; bottom:0; width:9%;
+    background:linear-gradient(90deg, rgba(0,0,0,.42), rgba(0,0,0,.05) 55%, rgba(255,255,255,.08) 66%, rgba(0,0,0,.2));
+    border-radius:3px 0 0 3px;
+  }
+  .cloth::after{
+    content:""; position:absolute; inset:6% 6% 6% 14%;
+    border:1px solid rgba(217,185,104,.55); border-radius:2px;
+  }
+  .emblem{ position:absolute; left:57%; top:50%; width:46%; transform:translate(-50%,-50%); }
+
+  .endpaper{
+    background:
+      radial-gradient(circle at 3px 3px, rgba(160,120,40,.35) 1px, transparent 1.6px) 0 0/14px 14px,
+      #f1e2b0;
+    border:6px solid var(--cloth-deep);
+    border-radius:7px 3px 3px 7px;
+  }
+
+  /* ---------- Strauß ---------- */
+  .bouquet{
+    left:calc(var(--u) * -.85);
+    width:calc(var(--u) * 1.7);
+    height:calc(var(--u) * 1.87);
+    top:calc(var(--h) * .83 - var(--u) * 1.87);
+    transform-origin:50% 100%;
+    transform:translateZ(12px) rotateX(-28deg);
+    pointer-events:none;
+  }
+  .bouquet svg{ display:block; width:100%; height:100%; overflow:visible; }
+
+  .stem{ fill:none; stroke:#4c8a38; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; }
+  .lf{ transform:scale(0); transform-box:fill-box; transform-origin:0% 50%; }
+  .p{ transform:scale(0); transform-box:fill-box; transform-origin:50% 100%; }
+  .c{ transform:scale(0); transform-box:fill-box; transform-origin:center; }
+  .vein{ fill:none; stroke:#b87400; stroke-opacity:.35; stroke-width:1.2; stroke-linecap:round; }
+  .plant{ transform-origin:200px 440px; }
+  .mote{ transform-box:fill-box; transform-origin:center; opacity:0; }
+
+  /* ---------- Fußzeile ---------- */
+  .foot{
+    flex:none; text-align:center; position:relative; z-index:5;
+    padding:0 0 calc(env(safe-area-inset-bottom, 0px) + 16px);
+    min-height:calc(env(safe-area-inset-bottom, 0px) + 58px);
+  }
+  .again{
+    font:italic 300 1rem/1 'Spectral', Georgia, serif;
+    color:var(--cream); background:transparent;
+    border:1px solid rgba(251,242,216,.35); border-radius:999px;
+    padding:.7em 1.5em; cursor:pointer;
+    opacity:0; pointer-events:none; transition:opacity .9s ease, border-color .2s ease, background .2s ease;
+  }
+  .done .again{ opacity:1; pointer-events:auto; }
+  .again:hover{ border-color:rgba(251,242,216,.7); background:rgba(251,242,216,.06); }
+  .again:focus-visible{ outline:2px solid var(--sun); outline-offset:3px; }
+
+  .veil{ position:fixed; inset:0; background:var(--night-0); opacity:0; pointer-events:none; transition:opacity .5s ease; z-index:20; }
+  .veil.on{ opacity:1; }
+
+  /* ---------- Warten auf Berührung ---------- */
+  .scene{ -webkit-tap-highlight-color:transparent; }
+  .scene.wait{ cursor:pointer; }
+  .scene:focus-visible{ outline:2px solid var(--sun); outline-offset:-6px; border-radius:12px; }
+  .scene.wait .cover{ animation:nudge 3.2s ease-in-out infinite; }
+  .hint{
+    position:absolute; left:0; right:0; top:0;
+    bottom:calc(env(safe-area-inset-bottom, 0px) + 16px);
+    display:flex; align-items:center; justify-content:center;
+    margin:0; padding:0 6vw;
+    font-style:italic; font-weight:300; font-size:1rem;
+    opacity:0; pointer-events:none;
+  }
+  .waiting .hint{ animation:breathe 3.2s ease-in-out infinite; }
+  @keyframes nudge{
+    0%,55%,100%{ transform:translateZ(6px) rotateY(0deg); }
+    72%{ transform:translateZ(9px) rotateY(-9deg); }
+    88%{ transform:translateZ(6px) rotateY(-1deg); }
+  }
+  @keyframes breathe{
+    0%,100%{ opacity:.45; }
+    50%{ opacity:.9; }
+  }
+
+  /* ---------- Ablauf ---------- */
+  .s-cover .tilt{ animation:tiltOpen 1.8s cubic-bezier(.5,.05,.25,1) forwards; }
+  .s-cover .book{ animation:bookCenter 1.8s cubic-bezier(.5,.05,.25,1) forwards; }
+  .s-cover .shadow{ animation:shadowOpen 1.8s cubic-bezier(.5,.05,.25,1) forwards; }
+  .s-cover .cover{ animation:coverOpen 1.8s cubic-bezier(.45,.05,.25,1) forwards; }
+  .s-cover .l{ animation:showL 0s linear .9s forwards; }
+  .s-leaf .leaf{ animation:leafOpen 1.6s cubic-bezier(.45,.05,.25,1) forwards; }
+
+  .s-bloom .glow{ animation:glowIn 3.5s ease-out 1.6s forwards; }
+  .s-bloom .stem{ animation:grow var(--sl) cubic-bezier(.4,.1,.2,1) var(--sd) both; }
+  .s-bloom .lf{ animation:leafGrow .9s cubic-bezier(.2,.9,.3,1.15) var(--ld) both; }
+  .s-bloom .p{ animation:bloom 1s cubic-bezier(.2,.8,.25,1) var(--pd) both; }
+  .s-bloom .c{ animation:pop .8s cubic-bezier(.3,1.5,.5,1) var(--pd) both; }
+  .s-bloom .plant{ animation:sway 7s ease-in-out 6s infinite; }
+  .s-bloom .mote{ animation:mote var(--mt) ease-out var(--md) infinite; }
+
+  @keyframes tiltOpen{
+    from{ transform:rotateX(22deg) rotateY(-26deg); }
+    to{ transform:rotateX(28deg) rotateY(0deg); }
+  }
+  @keyframes bookCenter{
+    from{ transform:translateX(calc(var(--u) * -.5)); }
+    to{ transform:translateX(0); }
+  }
+  @keyframes shadowOpen{
+    from{ transform:translateZ(-34px) translateX(calc(var(--u) * .62)) scaleX(.5); }
+    to{ transform:translateZ(-34px) translateX(0) scaleX(1); }
+  }
+  @keyframes coverOpen{
+    0%{ transform:translateZ(6px) rotateY(0deg); }
+    50%{ transform:translateZ(20px) rotateY(-96deg); }
+    100%{ transform:translateZ(1px) rotateY(-180deg); }
+  }
+  @keyframes leafOpen{
+    0%{ transform:translateZ(3px) rotateY(0deg); }
+    50%{ transform:translateZ(18px) rotateY(-92deg); }
+    100%{ transform:translateZ(4px) rotateY(-180deg); }
+  }
+  @keyframes showL{ to{ visibility:visible; } }
+  @keyframes glowIn{
+    to{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+  }
+  @keyframes grow{ from{ stroke-dashoffset:1; } to{ stroke-dashoffset:0; } }
+  @keyframes leafGrow{ from{ transform:scale(0); } to{ transform:scale(1); } }
+  @keyframes bloom{
+    0%{ transform:scale(0) rotate(-14deg); opacity:0; }
+    55%{ transform:scale(1.12) rotate(3deg); opacity:1; }
+    100%{ transform:scale(1) rotate(0deg); opacity:1; }
+  }
+  @keyframes pop{
+    from{ transform:scale(0); }
+    to{ transform:scale(1); }
+  }
+  @keyframes sway{
+    0%,100%{ transform:rotate(0deg); }
+    25%{ transform:rotate(1.4deg); }
+    75%{ transform:rotate(-1.4deg); }
+  }
+  @keyframes mote{
+    0%{ transform:translate(0,0) scale(.6); opacity:0; }
+    20%{ opacity:.95; }
+    100%{ transform:translate(var(--dx), -150px) scale(1); opacity:0; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .scene, .scene *{ animation-duration:.001s !important; animation-delay:0s !important; animation-iteration-count:1 !important; }
+    .line, .again, .veil{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="subs">
+  <p id="sub" class="line" aria-live="polite"></p>
+</header>
+
+<main class="stage">
+  <div class="scene" id="scene">
+    <div class="glow"></div>
+    <div class="tilt">
+      <div class="book" id="book">
+        <div class="shadow" id="shadow"></div>
+
+        <div class="base paper"></div>
+
+        <div class="flip leaf">
+          <div class="face front paper"></div>
+          <div class="face back paper"></div>
+        </div>
+
+        <div class="flip cover">
+          <div class="face front cloth"><svg class="emblem" id="emblem" viewBox="-50 -50 100 100" aria-hidden="true"></svg></div>
+          <div class="face back endpaper"></div>
+        </div>
+
+        <div class="bouquet" id="bouquet" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
+  <noscript>
+    <p style="text-align:center;padding:2rem;font-style:italic">Das hier soll dir zeigen, wie viel du mir bedeutest. Ich hoffe, dass du es, auch wenn du es nicht berühren kannst, tief in deinem Herzen spüren kannst. Manche Gefühle kann man nicht mit Worten erklären – man kann sie einfach im Herzen fühlen.</p>
+  </noscript>
+</main>
+
+<footer class="foot">
+  <p class="hint">Tippe auf das Buch, um es zu öffnen</p>
+  <button class="again" id="again" type="button">Noch einmal öffnen</button>
+</footer>
+<div class="veil" id="veil"></div>
+
+<script>
+(function(){
+  var LINES = [
+    "Das hier soll dir zeigen, wie viel du mir bedeutest.",
+    "Ich hoffe, dass du es, auch wenn du es nicht berühren kannst, tief in deinem Herzen spüren kannst.",
+    "Manche Gefühle kann man nicht mit Worten erklären – man kann sie einfach im Herzen fühlen."
+  ];
+
+  var $ = function(s){ return document.querySelector(s); };
+  var scene = $('#scene'), sub = $('#sub'), again = $('#again'), veil = $('#veil');
+  var book = $('#book'), shadow = $('#shadow');
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var f = function(n){ return Math.round(n * 100) / 100; };
+
+  /* ---------- Dicke des Buches ---------- */
+  function mk(cls){ var e = document.createElement('div'); e.className = cls; return e; }
+  function addStack(side){
+    var board = mk('board ' + side);
+    board.style.transform = 'translateZ(-15px)';
+    book.insertBefore(board, shadow.nextSibling);
+    for (var i = 1; i <= 6; i++){
+      var b = mk('blk ' + side);
+      b.style.transform = 'translateZ(' + (-i * 2) + 'px)';
+      b.style.background = (i % 2) ? '#efe5c9' : '#dccfa8';
+      book.insertBefore(b, shadow.nextSibling);
+    }
+  }
+  addStack('r');
+  addStack('l');
+
+  /* ---------- Emblem auf dem Einband ---------- */
+  (function(){
+    var s = '<g fill="none" stroke="#d9b968" stroke-width="1.3" stroke-linejoin="round" opacity=".9">';
+    for (var i = 0; i < 12; i++){
+      s += '<path transform="rotate(' + (i * 30) + ')" d="M0 -13 C -7 -23 -6 -37 0 -45 C 6 -37 7 -23 0 -13 Z"/>';
+    }
+    s += '<circle r="11"/><circle r="6.5" stroke-opacity=".6"/></g>';
+    $('#emblem').innerHTML = s;
+  })();
+
+  /* ---------- Strauß ---------- */
+  function petalD(r0, L, w){
+    return 'M0 ' + f(-r0) +
+      ' C ' + f(-w) + ' ' + f(-(r0 + L * .3)) + ', ' + f(-w * .8) + ' ' + f(-(r0 + L * .86)) + ', 0 ' + f(-(r0 + L)) +
+      ' C ' + f(w * .8) + ' ' + f(-(r0 + L * .86)) + ', ' + f(w) + ' ' + f(-(r0 + L * .3)) + ', 0 ' + f(-r0) + ' Z';
+  }
+
+  function head(cx, cy, R, n, d){
+    var r0 = R * .24, Lo = R * .78, Li = R * .6;
+    var po = petalD(r0, Lo, Lo * .3), pi = petalD(r0, Li, Li * .32);
+    var s = '<g transform="translate(' + cx + ' ' + cy + ')">';
+    s += '<circle r="' + f(R * .34) + '" fill="#5c8a2e"/>';
+    var i, a, dl;
+    for (i = 0; i < n; i++){
+      a = i * 360 / n; dl = d + .1 + i * .055;
+      s += '<g transform="rotate(' + f(a) + ')"><g class="p" style="--pd:' + f(dl) + 's">' +
+           '<path d="' + po + '" fill="url(#gO)"/>' +
+           '<path class="vein" d="M0 ' + f(-r0 - Lo * .1) + ' L0 ' + f(-r0 - Lo * .72) + '"/></g></g>';
+    }
+    var d2 = d + .1 + n * .055 * .55;
+    for (i = 0; i < n; i++){
+      a = (i + .5) * 360 / n; dl = d2 + i * .05;
+      s += '<g transform="rotate(' + f(a) + ')"><g class="p" style="--pd:' + f(dl) + 's">' +
+           '<path d="' + pi + '" fill="url(#gI)"/>' +
+           '<path class="vein" d="M0 ' + f(-r0 - Li * .1) + ' L0 ' + f(-r0 - Li * .7) + '"/></g></g>';
+    }
+    var N = R > 80 ? 150 : R > 50 ? 70 : 36, cr = R * .29, step = cr / Math.sqrt(N), seeds = '';
+    for (var k = 1; k <= N; k++){
+      var rr = step * Math.sqrt(k), th = k * 2.39996, dark = k % 2;
+      seeds += '<circle cx="' + f(rr * Math.cos(th)) + '" cy="' + f(rr * Math.sin(th)) + '" r="' + f(step * .3) +
+               '" fill="' + (dark ? '#2a1604' : '#a9762b') + '" opacity="' + (dark ? .6 : .5) + '"/>';
+    }
+    s += '<g class="c" style="--pd:' + f(d) + 's"><circle r="' + f(cr * 1.06) + '" fill="url(#gC)"/>' + seeds +
+         '<circle r="' + f(cr * 1.06) + '" fill="none" stroke="#3a2208" stroke-opacity=".35" stroke-width="' + f(R * .02) + '"/></g>';
+    return s + '</g>';
+  }
+
+  function stem(d, w, sd, sl){
+    return '<path class="stem" pathLength="1" d="' + d + '" style="stroke-width:' + w + ';--sd:' + sd + 's;--sl:' + sl + 's"/>';
+  }
+  function leaf(x, y, a, sc, ld){
+    return '<g transform="translate(' + x + ' ' + y + ') rotate(' + a + ') scale(' + sc + ')"><g class="lf" style="--ld:' + ld + 's">' +
+      '<path d="M0 0 C 14 -24, 56 -28, 88 0 C 56 24, 14 22, 0 0 Z" fill="url(#gL)"/>' +
+      '<path d="M4 0 C 30 -2, 55 -1, 80 0" stroke="#2f6027" stroke-opacity=".5" stroke-width="1.6" fill="none"/></g></g>';
+  }
+
+  function buildBouquet(){
+    var s = '<svg viewBox="0 0 400 440" xmlns="http://www.w3.org/2000/svg">';
+    s += '<defs>' +
+      '<linearGradient id="gO" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e59a00"/><stop offset=".6" stop-color="#f7b910"/><stop offset="1" stop-color="#ffd23f"/></linearGradient>' +
+      '<linearGradient id="gI" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#f4b400"/><stop offset="1" stop-color="#ffe680"/></linearGradient>' +
+      '<radialGradient id="gC"><stop offset="0" stop-color="#8a5a1e"/><stop offset=".7" stop-color="#5b3510"/><stop offset="1" stop-color="#3c2208"/></radialGradient>' +
+      '<linearGradient id="gL" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3b7030"/><stop offset="1" stop-color="#68ab4b"/></linearGradient>' +
+      '</defs>';
+    s += '<g class="plant">';
+    // Stiele
+    s += stem('M200 440 C 200 340, 196 240, 200 130', 6, 0, 2);
+    s += stem('M200 440 C 190 380, 140 330, 108 250', 4.5, .5, 1.6);
+    s += stem('M200 440 C 215 370, 275 320, 297 232', 4.5, .7, 1.6);
+    s += stem('M200 440 C 150 425, 95 395, 52 348', 3.6, 1, 1.2);
+    s += stem('M200 440 C 250 428, 305 400, 350 340', 3.6, 1.2, 1.2);
+    // Blätter
+    s += leaf(200, 438, -122, 1.05, .3) + leaf(200, 438, -58, 1.05, .4);
+    s += leaf(200, 362, -150, 1.05, .7) + leaf(200, 322, -30, .95, .95) + leaf(199, 272, -146, .8, 1.2);
+    s += leaf(162, 352, -165, .8, 1.0) + leaf(246, 343, -15, .85, 1.2);
+    s += leaf(123, 406, -170, .68, 1.3) + leaf(277, 408, -20, .68, 1.5);
+    // Blüten (hinten nach vorne)
+    s += head(200, 130, 100, 18, 1.8);
+    s += head(108, 250, 62, 14, 2.0);
+    s += head(297, 232, 68, 15, 2.2);
+    s += head(52, 348, 40, 12, 2.1);
+    s += head(350, 340, 42, 12, 2.3);
+    s += '</g>';
+    // Blütenstaub
+    s += '<g>';
+    for (var i = 0; i < 22; i++){
+      var x = 50 + Math.random() * 300, y = 40 + Math.random() * 280, r = 1.4 + Math.random() * 1.8;
+      s += '<circle class="mote" cx="' + f(x) + '" cy="' + f(y) + '" r="' + f(r) + '" fill="#ffe27a" style="--dx:' + f((Math.random() - .5) * 60) +
+           'px;--mt:' + f(4 + Math.random() * 3) + 's;--md:' + f(6 + Math.random() * 5) + 's"/>';
+    }
+    s += '</g></svg>';
+    $('#bouquet').innerHTML = s;
+  }
+  buildBouquet();
+
+  /* ---------- Ablauf ---------- */
+  var timers = [];
+  function later(fn, ms){ timers.push(setTimeout(fn, ms)); }
+  function clearTimers(){ timers.forEach(clearTimeout); timers = []; }
+
+  function show(text, fade){
+    if (fade){
+      sub.classList.remove('on');
+      later(function(){ sub.textContent = text; sub.classList.add('on'); }, 700);
+    } else {
+      sub.textContent = text;
+      requestAnimationFrame(function(){ sub.classList.add('on'); });
+    }
+  }
+
+  var started = false;
+
+  function play(){
+    clearTimers();
+    started = false;
+    scene.className = 'scene';
+    scene.removeAttribute('role');
+    scene.removeAttribute('tabindex');
+    scene.removeAttribute('aria-label');
+    sub.classList.remove('on');
+    sub.textContent = '';
+    document.body.classList.remove('done', 'waiting');
+
+    if (reduce){
+      scene.classList.add('s-cover', 's-leaf', 's-bloom');
+      sub.textContent = LINES.join(' ');
+      sub.classList.add('on');
+      document.body.classList.add('done');
+      return;
+    }
+
+    // Das Buch wartet geschlossen, bis man es berührt.
+    scene.classList.add('wait');
+    scene.setAttribute('role', 'button');
+    scene.setAttribute('tabindex', '0');
+    scene.setAttribute('aria-label', 'Buch öffnen');
+    document.body.classList.add('waiting');
+  }
+
+  function start(){
+    if (started || !scene.classList.contains('wait')) return;
+    started = true;
+    scene.classList.remove('wait');
+    scene.removeAttribute('role');
+    scene.removeAttribute('tabindex');
+    scene.removeAttribute('aria-label');
+    document.body.classList.remove('waiting');
+
+    later(function(){ scene.classList.add('s-cover'); }, 60);
+    later(function(){ scene.classList.add('s-leaf'); }, 1560);
+    later(function(){ scene.classList.add('s-bloom'); }, 2960);
+
+    var t = 3360;
+    LINES.forEach(function(text, i){
+      later(function(){ show(text, i > 0); }, t);
+      t += 1900 + text.length * 62;
+    });
+    later(function(){ document.body.classList.add('done'); }, t - 1500);
+  }
+
+  scene.addEventListener('click', start);
+  scene.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); start(); }
+  });
+
+  function replay(){
+    clearTimers();
+    veil.classList.add('on');
+    later(function(){
+      play();
+      later(function(){ veil.classList.remove('on'); }, 150);
+    }, 550);
+  }
+
+  again.addEventListener('click', replay);
+  window.addEventListener('load', play);
+})();
+</script>
+</body>
+</html>
